@@ -1,0 +1,45 @@
+{
+  "images" : [
+    {
+<<<<<<< HEAD
+      "filename" : "Status=active, Mode=dark.svg",
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Status=active, Mode=white.svg",
+      "idiom" : "universal"
+=======
+      "filename" : "copilot-16.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "copilot-32.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "copilot-48.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "properties" : {
+<<<<<<< HEAD
+    "preserves-vector-representation" : true
+=======
+    "template-rendering-intent" : "template"
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+  }
+}

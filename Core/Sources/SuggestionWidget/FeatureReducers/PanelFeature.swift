@@ -1,0 +1,333 @@
+import AppKit
+import ComposableArchitecture
+import Foundation
+
+@Reducer
+public struct PanelFeature {
+<<<<<<< HEAD
+    public enum PanelType {
+        case suggestion, nes, agentConfiguration
+    }
+    
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+    @ObservableState
+    public struct State: Equatable {
+        public var content: SharedPanelFeature.Content {
+            get { sharedPanelState.content }
+            set {
+                sharedPanelState.content = newValue
+                suggestionPanelState.content = newValue.suggestion
+<<<<<<< HEAD
+             }
+        }
+        
+        public var nesContent: NESCodeSuggestionProvider? {
+            get { nesSuggestionPanelState.nesContent }
+            set {
+                nesSuggestionPanelState.nesContent = newValue
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+            }
+        }
+
+        // MARK: SharedPanel
+
+        var sharedPanelState = SharedPanelFeature.State()
+
+        // MARK: SuggestionPanel
+
+        var suggestionPanelState = SuggestionPanelFeature.State()
+<<<<<<< HEAD
+        
+        // MARK: NESSuggestionPanel
+        
+        public var nesSuggestionPanelState = NESSuggestionPanelFeature.State()
+        
+        // MARK: SubAgent
+        
+        public var agentConfigurationWidgetState = AgentConfigurationWidgetFeature.State()
+
+        var warningMessage: String?
+        var warningURL: String?
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+    }
+
+    public enum Action: Equatable {
+        case presentSuggestion
+<<<<<<< HEAD
+        case presentNESSuggestion
+        case presentSuggestionProvider(CodeSuggestionProvider, displayContent: Bool)
+        case presentNESSuggestionProvider(NESCodeSuggestionProvider, displayContent: Bool)
+        case presentError(String)
+        case presentPromptToCode(PromptToCodeGroup.PromptToCodeInitialState)
+        case displayPanelContent
+        case displayNESPanelContent
+        case expandSuggestion
+        case discardSuggestion
+        case discardNESSuggestion
+        case removeDisplayedContent
+        case switchToAnotherEditorAndUpdateContent
+        case hidePanel(PanelType)
+        case showPanel(PanelType)
+        case onRealtimeNESToggleChanged(Bool)
+
+        case sharedPanel(SharedPanelFeature.Action)
+        case suggestionPanel(SuggestionPanelFeature.Action)
+        case nesSuggestionPanel(NESSuggestionPanelFeature.Action)
+        case agentConfigurationWidget(AgentConfigurationWidgetFeature.Action)
+
+        case presentWarning(message: String, url: String?)
+        case dismissWarning
+=======
+        case presentSuggestionProvider(CodeSuggestionProvider, displayContent: Bool)
+        case presentError(String)
+        case presentPromptToCode(PromptToCodeGroup.PromptToCodeInitialState)
+        case displayPanelContent
+        case expandSuggestion
+        case discardSuggestion
+        case removeDisplayedContent
+        case switchToAnotherEditorAndUpdateContent
+        case hidePanel
+        case showPanel
+
+        case sharedPanel(SharedPanelFeature.Action)
+        case suggestionPanel(SuggestionPanelFeature.Action)
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+    }
+
+    @Dependency(\.suggestionWidgetControllerDependency) var suggestionWidgetControllerDependency
+    @Dependency(\.xcodeInspector) var xcodeInspector
+    @Dependency(\.activateThisApp) var activateThisApp
+    var windows: WidgetWindows? { suggestionWidgetControllerDependency.windowsController?.windows }
+
+    public var body: some ReducerOf<Self> {
+        Scope(state: \.suggestionPanelState, action: \.suggestionPanel) {
+            SuggestionPanelFeature()
+        }
+
+        Scope(state: \.sharedPanelState, action: \.sharedPanel) {
+            SharedPanelFeature()
+        }
+<<<<<<< HEAD
+        
+        Scope(state: \.nesSuggestionPanelState, action: \.nesSuggestionPanel) {
+            NESSuggestionPanelFeature()
+        }
+        
+        Scope(state: \.agentConfigurationWidgetState, action: \.agentConfigurationWidget) {
+            AgentConfigurationWidgetFeature()
+        }
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+
+        Reduce { state, action in
+            switch action {
+            case .presentSuggestion:
+                return .run { send in
+                    guard let fileURL = await xcodeInspector.safe.activeDocumentURL,
+                          let provider = await fetchSuggestionProvider(fileURL: fileURL)
+                    else { return }
+                    await send(.presentSuggestionProvider(provider, displayContent: true))
+                }
+<<<<<<< HEAD
+                
+            case .presentNESSuggestion:
+                return .run { send in
+                    guard let fileURL = await xcodeInspector.safe.activeDocumentURL,
+                          let provider = await fetchNESSuggestionProvider(fileURL: fileURL)
+                    else { return }
+                    await send(.presentNESSuggestionProvider(provider, displayContent: true))
+                }
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+
+            case let .presentSuggestionProvider(provider, displayContent):
+                state.content.suggestion = provider
+                if displayContent {
+                    return .run { send in
+                        await send(.displayPanelContent)
+                    }.animation(.easeInOut(duration: 0.2))
+                }
+                return .none
+<<<<<<< HEAD
+                
+            case let .presentNESSuggestionProvider(provider, displayContent):
+                state.nesContent = provider
+                if displayContent {
+                    return .run { send in
+                        await send(.displayNESPanelContent)
+                    }.animation(.easeInOut(duration: 0.2))
+                }
+                return .none
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+
+            case let .presentError(errorDescription):
+                state.content.error = errorDescription
+                return .run { send in
+                    await send(.displayPanelContent)
+                }.animation(.easeInOut(duration: 0.2))
+
+            case let .presentPromptToCode(initialState):
+                return .run { send in
+                    await send(.sharedPanel(.promptToCodeGroup(.createPromptToCode(initialState))))
+                }
+
+            case .displayPanelContent:
+                if !state.sharedPanelState.isEmpty {
+                    state.sharedPanelState.isPanelDisplayed = true
+                }
+
+                if state.suggestionPanelState.content != nil {
+                    state.suggestionPanelState.isPanelDisplayed = true
+                }
+<<<<<<< HEAD
+                return .none
+                
+            case .displayNESPanelContent:
+                if state.nesSuggestionPanelState.nesContent != nil {
+                    state.nesSuggestionPanelState.isPanelDisplayed = true
+                }
+=======
+
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+                return .none
+
+            case .discardSuggestion:
+                state.content.suggestion = nil
+                return .none
+<<<<<<< HEAD
+            
+            case .discardNESSuggestion:
+                state.nesContent = nil
+                return .none
+                
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+            case .expandSuggestion:
+                state.content.isExpanded = true
+                return .none
+            case .switchToAnotherEditorAndUpdateContent:
+                return .run { send in
+                    guard let fileURL = await xcodeInspector.safe.realtimeActiveDocumentURL
+                    else { return }
+
+                    await send(.sharedPanel(
+                        .promptToCodeGroup(
+                            .updateActivePromptToCode(documentURL: fileURL)
+                        )
+                    ))
+                }
+<<<<<<< HEAD
+            case .hidePanel(let panelType):
+                switch panelType {
+                case .suggestion:
+                    state.suggestionPanelState.isPanelDisplayed = false
+                case .nes:
+                    state.nesSuggestionPanelState.isPanelDisplayed = false
+                case .agentConfiguration:
+                    state.agentConfigurationWidgetState.isPanelDisplayed = false
+                }
+                return .none
+            case .showPanel(let panelType):
+                switch panelType {
+                case .suggestion:
+                    state.suggestionPanelState.isPanelDisplayed = true
+                case .nes:
+                    state.nesSuggestionPanelState.isPanelDisplayed = true
+                case .agentConfiguration:
+                    state.agentConfigurationWidgetState.isPanelDisplayed = true
+                }
+                return .none
+            case let .onRealtimeNESToggleChanged(isOn):
+                if !isOn {
+                    return .run { send in
+                        await send(.hidePanel(.nes))
+                        await send(.discardNESSuggestion)
+                    }
+                }
+                return .none
+                
+            case .removeDisplayedContent:
+                state.content.error = nil
+                state.content.suggestion = nil
+                state.nesContent = nil
+=======
+            case .hidePanel:
+                state.suggestionPanelState.isPanelDisplayed = false
+                return .none
+            case .showPanel:
+                state.suggestionPanelState.isPanelDisplayed = true
+                return .none
+            case .removeDisplayedContent:
+                state.content.error = nil
+                state.content.suggestion = nil
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+                return .none
+
+            case .sharedPanel(.promptToCodeGroup(.activateOrCreatePromptToCode)),
+                 .sharedPanel(.promptToCodeGroup(.createPromptToCode)):
+                let hasPromptToCode = state.content.promptToCode != nil
+                return .run { send in
+                    await send(.displayPanelContent)
+
+                    if hasPromptToCode {
+                        activateThisApp()
+                        await MainActor.run {
+                            windows?.sharedPanelWindow.makeKey()
+                        }
+                    }
+                }.animation(.easeInOut(duration: 0.2))
+
+            case .sharedPanel:
+                return .none
+
+            case .suggestionPanel:
+                return .none
+<<<<<<< HEAD
+                
+            case .nesSuggestionPanel:
+                return .none
+                
+            case .agentConfigurationWidget:
+                return .none
+
+            case .presentWarning(let message, let url):
+                state.warningMessage = message
+                state.warningURL = url
+                state.suggestionPanelState.warningMessage = message
+                state.suggestionPanelState.warningURL = url
+                return .none
+
+            case .dismissWarning:
+                state.warningMessage = nil
+                state.warningURL = nil
+                state.suggestionPanelState.warningMessage = nil
+                state.suggestionPanelState.warningURL = nil
+                return .none
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+            }
+        }
+    }
+
+    func fetchSuggestionProvider(fileURL: URL) async -> CodeSuggestionProvider? {
+        guard let provider = await suggestionWidgetControllerDependency
+            .suggestionWidgetDataSource?
+            .suggestionForFile(at: fileURL) else { return nil }
+        return provider
+    }
+<<<<<<< HEAD
+    
+    func fetchNESSuggestionProvider(fileURL: URL) async -> NESCodeSuggestionProvider? {
+        guard let provider = await suggestionWidgetControllerDependency
+            .suggestionWidgetDataSource?
+            .nesSuggestionForFile(at: fileURL) else { return nil }
+        return provider
+    }
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+}
+

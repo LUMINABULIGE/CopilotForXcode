@@ -1,0 +1,509 @@
+import ActiveApplicationMonitor
+import AppActivator
+import AsyncAlgorithms
+import ComposableArchitecture
+import Foundation
+import GitHubCopilotService
+import Logger
+import Preferences
+import SwiftUI
+import Toast
+import XcodeInspector
+
+@Reducer
+public struct WidgetFeature {
+    public struct WindowState: Equatable {
+        var alphaValue: Double = 0
+        var frame: CGRect = .zero
+    }
+
+    public enum WindowCanBecomeKey: Equatable {
+        case sharedPanel
+        case chatPanel
+    }
+
+    @ObservableState
+    public struct State: Equatable {
+        var focusingDocumentURL: URL?
+        public var colorScheme: ColorScheme = .light
+
+        var toastPanel = ToastPanel.State()
+
+        // MARK: Panels
+
+        public var panelState = PanelFeature.State()
+
+        // MARK: ChatPanel
+
+        public var chatPanelState = ChatPanelFeature.State()
+<<<<<<< HEAD
+        
+        // MARK: CodeReview
+        
+        public var codeReviewPanelState = CodeReviewPanelFeature.State()
+        
+        // MARK: FixError
+        
+        public var fixErrorPanelState = FixErrorPanelFeature.State()
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+
+        // MARK: CircularWidget
+
+        public struct CircularWidgetState: Equatable {
+            var isProcessingCounters = [CircularWidgetFeature.IsProcessingCounter]()
+            var isProcessing: Bool = false
+        }
+
+        public var circularWidgetState = CircularWidgetState()
+        var _internalCircularWidgetState: CircularWidgetFeature.State {
+            get {
+                .init(
+                    isProcessingCounters: circularWidgetState.isProcessingCounters,
+                    isProcessing: circularWidgetState.isProcessing,
+                    isDisplayingContent: {
+                        if chatPanelState.isPanelDisplayed {
+                            return true
+                        }
+                        if panelState.sharedPanelState.isPanelDisplayed,
+                           !panelState.sharedPanelState.isEmpty
+                        {
+                            return true
+                        }
+                        if panelState.suggestionPanelState.isPanelDisplayed,
+                           panelState.suggestionPanelState.content != nil
+                        {
+                            return true
+                        }
+                        return false
+                    }(),
+<<<<<<< HEAD
+                    isContentEmpty: chatPanelState.currentChatWorkspace == nil
+                        || (chatPanelState.currentChatWorkspace!.tabInfo.isEmpty
+                        && panelState.sharedPanelState.isEmpty),
+=======
+                    isContentEmpty: chatPanelState.chatTabGroup.tabInfo.isEmpty
+                        && panelState.sharedPanelState.isEmpty,
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+                    isChatPanelDetached: chatPanelState.isDetached,
+                    isChatOpen: chatPanelState.isPanelDisplayed
+                )
+            }
+            set {
+                circularWidgetState = .init(
+                    isProcessingCounters: newValue.isProcessingCounters,
+                    isProcessing: newValue.isProcessing
+                )
+            }
+        }
+
+        public init() {}
+    }
+
+    private enum CancelID {
+        case observeActiveApplicationChange
+        case observeCompletionPanelChange
+        case observeFullscreenChange
+        case observeWindowChange
+        case observeEditorChange
+        case observeUserDefaults
+    }
+
+    public enum Action: Equatable {
+        case startup
+        case observeActiveApplicationChange
+        case observeFullscreenChange
+        case observeColorSchemeChange
+
+        case updateActiveApplication
+        case updateColorScheme
+
+        case updatePanelStateToMatch(WidgetLocation)
+<<<<<<< HEAD
+        case updateNESSuggestionPanelStateToMatch(WidgetLocation)
+        case updateAgentConfigurationWidgetStateToMatch(WidgetLocation)
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+        case updateFocusingDocumentURL
+        case setFocusingDocumentURL(to: URL?)
+        case updateKeyWindow(WindowCanBecomeKey)
+
+        case toastPanel(ToastPanel.Action)
+        case panel(PanelFeature.Action)
+        case chatPanel(ChatPanelFeature.Action)
+        case circularWidget(CircularWidgetFeature.Action)
+<<<<<<< HEAD
+        case codeReviewPanel(CodeReviewPanelFeature.Action)
+        case fixErrorPanel(FixErrorPanelFeature.Action)
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+    }
+
+    var windowsController: WidgetWindowsController? {
+        suggestionWidgetControllerDependency.windowsController
+    }
+
+    @Dependency(\.suggestionWidgetUserDefaultsObservers) var userDefaultsObservers
+    @Dependency(\.suggestionWidgetControllerDependency) var suggestionWidgetControllerDependency
+    @Dependency(\.xcodeInspector) var xcodeInspector
+    @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.activateThisApp) var activateThisApp
+    @Dependency(\.activatePreviousActiveApp) var activatePreviousActiveApp
+
+    public enum DebounceKey: Hashable {
+        case updateWindowOpacity
+    }
+
+    public init() {}
+
+    public var body: some ReducerOf<Self> {
+        Scope(state: \.toastPanel, action: \.toastPanel) {
+            ToastPanel()
+        }
+
+        Scope(state: \._internalCircularWidgetState, action: \.circularWidget) {
+            CircularWidgetFeature()
+        }
+<<<<<<< HEAD
+        
+        Scope(state: \.codeReviewPanelState, action: \.codeReviewPanel) {
+            CodeReviewPanelFeature()
+        }
+        
+        Scope(state: \.fixErrorPanelState, action: \.fixErrorPanel) {
+            FixErrorPanelFeature()
+        }
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+
+        Reduce { state, action in
+            switch action {
+            case .circularWidget(.detachChatPanelToggleClicked):
+                return .run { send in
+                    await send(.chatPanel(.toggleChatPanelDetachedButtonClicked))
+                }
+
+            case .circularWidget(.widgetClicked):
+                guard FeatureFlagNotifierImpl.shared.featureFlags.chat else {
+                    return .none
+                }
+                
+                let wasDisplayingContent = state._internalCircularWidgetState.isDisplayingContent
+                if wasDisplayingContent {
+                    state.panelState.sharedPanelState.isPanelDisplayed = false
+                    state.panelState.suggestionPanelState.isPanelDisplayed = false
+                    state.chatPanelState.isPanelDisplayed = false
+                } else {
+                    state.panelState.sharedPanelState.isPanelDisplayed = true
+                    state.panelState.suggestionPanelState.isPanelDisplayed = true
+                    state.chatPanelState.isPanelDisplayed = true
+                }
+
+                let isDisplayingContent = state._internalCircularWidgetState.isDisplayingContent
+<<<<<<< HEAD
+                let hasChat = state.chatPanelState.currentChatWorkspace?.selectedTabInfo != nil
+=======
+                let hasChat = state.chatPanelState.chatTabGroup.selectedTabInfo != nil
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+                let hasPromptToCode = state.panelState.sharedPanelState.content
+                    .promptToCodeGroup.activePromptToCode != nil
+
+                return .run { send in
+                    if isDisplayingContent {
+                        if hasPromptToCode {
+                            await send(.updateKeyWindow(.sharedPanel))
+                        } else if hasChat {
+                            await send(.updateKeyWindow(.chatPanel))
+                        }
+                        await send(.chatPanel(.focusActiveChatTab))
+                    }
+
+                    if isDisplayingContent, !(await NSApplication.shared.isActive) {
+                        activateThisApp()
+                    } else if !isDisplayingContent {
+                        activatePreviousActiveApp()
+                    }
+                }
+
+            default: return .none
+            }
+        }
+
+        Scope(state: \.panelState, action: \.panel) {
+            PanelFeature()
+        }
+
+        Scope(state: \.chatPanelState, action: \.chatPanel) {
+            ChatPanelFeature()
+        }
+
+        Reduce { state, action in
+            switch action {
+            case .chatPanel(.presentChatPanel):
+                let isDetached = state.chatPanelState.isDetached
+                return .run { _ in
+                    await windowsController?.updateWindowLocation(
+                        animated: false,
+                        immediately: false
+                    )
+                    await windowsController?.updateWindowOpacity(immediately: false)
+                    if isDetached {
+                        Task { @MainActor in
+                            windowsController?.windows.chatPanelWindow.isWindowHidden = false
+                        }
+                    }
+                }
+
+            case .chatPanel(.toggleChatPanelDetachedButtonClicked):
+                let isDetached = state.chatPanelState.isDetached
+                return .run { _ in
+                    await windowsController?.updateWindowLocation(
+                        animated: !isDetached,
+                        immediately: false
+                    )
+                    await windowsController?.updateWindowOpacity(immediately: false)
+                }
+            default: return .none
+            }
+        }
+
+        Reduce { state, action in
+            switch action {
+            case .startup:
+                return .merge(
+                    .run { send in
+                        await send(.toastPanel(.start))
+                        await send(.observeActiveApplicationChange)
+                        await send(.observeFullscreenChange)
+                        await send(.observeColorSchemeChange)
+                    }
+                )
+
+            case .observeActiveApplicationChange:
+                return .run { send in
+                    let stream = AsyncStream<AppInstanceInspector> { continuation in
+                        let cancellable = xcodeInspector.$activeApplication.sink { newValue in
+                            guard let newValue else { return }
+                            continuation.yield(newValue)
+                        }
+                        continuation.onTermination = { _ in
+                            cancellable.cancel()
+                        }
+                    }
+
+                    var previousAppIdentifier: pid_t?
+                    for await app in stream {
+                        try Task.checkCancellation()
+                        if app.processIdentifier != previousAppIdentifier {
+                            await send(.updateActiveApplication)
+                        }
+                        previousAppIdentifier = app.processIdentifier
+                    }
+                }.cancellable(id: CancelID.observeActiveApplicationChange, cancelInFlight: true)
+
+            case .observeFullscreenChange:
+                return .run { _ in
+                    let sequence = NSWorkspace.shared.notificationCenter
+                        .notifications(named: NSWorkspace.activeSpaceDidChangeNotification)
+                    for await _ in sequence {
+                        try Task.checkCancellation()
+                        guard let activeXcode = await xcodeInspector.safe.activeXcode
+                        else { continue }
+                        guard let windowsController,
+                              await windowsController.windows.fullscreenDetector.isOnActiveSpace
+                        else { continue }
+                        let app = activeXcode.appElement
+                        if let _ = app.focusedWindow {
+                            await windowsController.windows.orderFront()
+                        }
+                    }
+                }.cancellable(id: CancelID.observeFullscreenChange, cancelInFlight: true)
+
+            case .observeColorSchemeChange:
+                return .run { send in
+                    await send(.updateColorScheme)
+                    let stream = AsyncStream<Void> { continuation in
+<<<<<<< HEAD
+                        userDefaultsObservers.xcodeColorSchemeChangeObserver.onChange = {
+=======
+                        userDefaultsObservers.colorSchemeChangeObserver.onChange = {
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+                            continuation.yield()
+                        }
+
+                        userDefaultsObservers.systemColorSchemeChangeObserver.onChange = {
+                            continuation.yield()
+                        }
+
+<<<<<<< HEAD
+                        Task { @MainActor in
+                            Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+                                continuation.yield()
+                            }
+                        }
+
+                        continuation.onTermination = { _ in
+                            userDefaultsObservers.xcodeColorSchemeChangeObserver.onChange = {}
+=======
+                        continuation.onTermination = { _ in
+                            userDefaultsObservers.colorSchemeChangeObserver.onChange = {}
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+                            userDefaultsObservers.systemColorSchemeChangeObserver.onChange = {}
+                        }
+                    }
+
+                    for await _ in stream {
+                        try Task.checkCancellation()
+                        await send(.updateColorScheme)
+                    }
+                }.cancellable(id: CancelID.observeUserDefaults, cancelInFlight: true)
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+            case .updateActiveApplication:
+                return .none
+
+            case .updateColorScheme:
+<<<<<<< HEAD
+                let xcodePref = UserDefaults(suiteName: "com.apple.dt.Xcode")!
+                    .value(forKey: "IDEAppearance") as? Int ?? 0
+                let xcodeColorScheme: XcodeColorScheme = .init(rawValue: xcodePref) ?? .system
+=======
+                let widgetColorScheme = UserDefaults.shared.value(for: \.widgetColorScheme)
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+                let systemColorScheme: ColorScheme = NSApp.effectiveAppearance.name == .darkAqua
+                    ? .dark
+                    : .light
+
+                let scheme: ColorScheme = {
+<<<<<<< HEAD
+                    switch (xcodeColorScheme, systemColorScheme) {
+=======
+                    switch (widgetColorScheme, systemColorScheme) {
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+                    case (.system, .dark), (.dark, _):
+                        return .dark
+                    case (.system, .light), (.light, _):
+                        return .light
+                    case (.system, _):
+                        return .light
+                    }
+                }()
+
+                state.colorScheme = scheme
+                state.toastPanel.colorScheme = scheme
+                state.panelState.sharedPanelState.colorScheme = scheme
+                state.panelState.suggestionPanelState.colorScheme = scheme
+                state.chatPanelState.colorScheme = scheme
+                return .none
+
+            case .updateFocusingDocumentURL:
+                return .run { send in
+                    await send(.setFocusingDocumentURL(
+                        to: await xcodeInspector.safe
+                            .realtimeActiveDocumentURL
+                    ))
+                }
+
+            case let .setFocusingDocumentURL(url):
+                state.focusingDocumentURL = url
+                return .none
+
+            case let .updatePanelStateToMatch(widgetLocation):
+                state.panelState.sharedPanelState.alignTopToAnchor = widgetLocation
+                    .defaultPanelLocation
+                    .alignPanelTop
+
+                if let suggestionPanelLocation = widgetLocation.suggestionPanelLocation {
+                    state.panelState.suggestionPanelState.isPanelOutOfFrame = false
+                    state.panelState.suggestionPanelState
+                        .alignTopToAnchor = suggestionPanelLocation
+                        .alignPanelTop
+                    state.panelState.suggestionPanelState.firstLineIndent = suggestionPanelLocation.firstLineIndent ?? 0
+                    if let lineHeight = suggestionPanelLocation.lineHeight {
+                        state.panelState.suggestionPanelState.lineHeight = lineHeight
+                    }
+                } else {
+                    state.panelState.suggestionPanelState.isPanelOutOfFrame = true
+                }
+
+                state.toastPanel.alignTopToAnchor = widgetLocation
+                    .defaultPanelLocation
+                    .alignPanelTop
+
+                return .none
+<<<<<<< HEAD
+                
+            case let .updateNESSuggestionPanelStateToMatch(widgetLocation):
+                
+                guard let nesSuggestionPanelLocation = widgetLocation.nesSuggestionPanelLocation else {
+                    state.panelState.nesSuggestionPanelState.isPanelDisplayed = false
+                    state.panelState.nesSuggestionPanelState.isPanelOutOfFrame = false
+                    return .none
+                }
+                
+                let lineFirstCharacterFrame = nesSuggestionPanelLocation.lineFirstCharacterFrame
+                let scrollViewFrame = nesSuggestionPanelLocation.scrollViewFrame
+                if scrollViewFrame.contains(lineFirstCharacterFrame) {
+                    state.panelState.nesSuggestionPanelState.isPanelOutOfFrame = false
+                } else {
+                    state.panelState.nesSuggestionPanelState.isPanelOutOfFrame = true
+                }
+                state.panelState.nesSuggestionPanelState.lineHeight = nesSuggestionPanelLocation.lineHeight
+                
+                return .none
+                
+            case let .updateAgentConfigurationWidgetStateToMatch(widgetLocation):
+                guard let agentConfigurationWidgetLocation = widgetLocation.agentConfigurationWidgetLocation else {
+                    state.panelState.agentConfigurationWidgetState.isPanelDisplayed = false
+                    return .none
+                }
+                
+                state.panelState.agentConfigurationWidgetState.isPanelDisplayed = true
+                state.panelState.agentConfigurationWidgetState.lineHeight = agentConfigurationWidgetLocation.lineHeight
+                
+                return .none
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+
+            case let .updateKeyWindow(window):
+                return .run { _ in
+                    await MainActor.run {
+                        switch window {
+                        case .chatPanel:
+                            windowsController?.windows.chatPanelWindow
+                                .makeKeyAndOrderFront(nil)
+                        case .sharedPanel:
+                            windowsController?.windows.sharedPanelWindow
+                                .makeKeyAndOrderFront(nil)
+                        }
+                    }
+                }
+
+            case .toastPanel:
+                return .none
+
+            case .circularWidget:
+                return .none
+
+            case .panel:
+                return .none
+
+            case .chatPanel:
+                return .none
+<<<<<<< HEAD
+                
+            case .codeReviewPanel:
+                return .none
+                
+            case .fixErrorPanel:
+                return .none
+=======
+>>>>>>> 4a8ae39... Pre-release 0.22.73
+            }
+        }
+    }
+}
+
