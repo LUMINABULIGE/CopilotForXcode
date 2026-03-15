@@ -4,6 +4,7 @@
 	classes = {
 	};
 	objectVersion = 70;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -20,6 +21,8 @@
 		5EC511E62C90CFD700632BAB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C861E6142994F6080056CB02 /* Assets.xcassets */; };
 		7E6CEC912EAB6774005F2076 /* RejectNESSuggestionCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6CEC902EAB6774005F2076 /* RejectNESSuggestionCommand.swift */; };
 		7E856FF72E9F6D24005751CB /* AcceptNESSuggestionCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E856FF62E9F6D1D005751CB /* AcceptNESSuggestionCommand.swift */; };
+		427C63282C6E868B000E557C /* OpenSettingsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C63272C6E868B000E557C /* OpenSettingsCommand.swift */; };
+		42888D512C66B10100DEF835 /* AuthStatusChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42888D502C66B10100DEF835 /* AuthStatusChecker.swift */; };
 		C8009BFF2941C551007AA7E8 /* ToggleRealtimeSuggestionsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8009BFE2941C551007AA7E8 /* ToggleRealtimeSuggestionsCommand.swift */; };
 		C8009C032941C576007AA7E8 /* SyncTextSettingsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8009C022941C576007AA7E8 /* SyncTextSettingsCommand.swift */; };
 		C800DBB1294C624D00B04CAC /* PrefetchSuggestionsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C800DBB0294C624D00B04CAC /* PrefetchSuggestionsCommand.swift */; };
@@ -197,6 +200,10 @@
 		427C63272C6E868B000E557C /* OpenSettingsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSettingsCommand.swift; sourceTree = "<group>"; };
 		7E6CEC902EAB6774005F2076 /* RejectNESSuggestionCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RejectNESSuggestionCommand.swift; sourceTree = "<group>"; };
 		7E856FF62E9F6D1D005751CB /* AcceptNESSuggestionCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcceptNESSuggestionCommand.swift; sourceTree = "<group>"; };
+		3ABBEA282C8B9FE100C61D61 /* copilot-language-server */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "copilot-language-server"; path = "Server/node_modules/@github/copilot-language-server/native/darwin-x64/copilot-language-server"; sourceTree = SOURCE_ROOT; };
+		3ABBEA2A2C8BA00300C61D61 /* copilot-language-server-arm64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "copilot-language-server-arm64"; path = "Server/node_modules/@github/copilot-language-server/native/darwin-arm64/copilot-language-server-arm64"; sourceTree = SOURCE_ROOT; };
+		427C63272C6E868B000E557C /* OpenSettingsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSettingsCommand.swift; sourceTree = "<group>"; };
+		42888D502C66B10100DEF835 /* AuthStatusChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthStatusChecker.swift; sourceTree = "<group>"; };
 		C8009BFE2941C551007AA7E8 /* ToggleRealtimeSuggestionsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleRealtimeSuggestionsCommand.swift; sourceTree = "<group>"; };
 		C8009C022941C576007AA7E8 /* SyncTextSettingsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncTextSettingsCommand.swift; sourceTree = "<group>"; };
 		C800DBB0294C624D00B04CAC /* PrefetchSuggestionsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrefetchSuggestionsCommand.swift; sourceTree = "<group>"; };
@@ -338,6 +345,8 @@
 				C80FFB952A95F58200704A25 /* AcceptPromptToCodeCommand.swift */,
 				C87B03A6293B261900C77EAE /* RejectSuggestionCommand.swift */,
 				7E6CEC902EAB6774005F2076 /* RejectNESSuggestionCommand.swift */,
+				C80FFB952A95F58200704A25 /* AcceptPromptToCodeCommand.swift */,
+				C87B03A6293B261900C77EAE /* RejectSuggestionCommand.swift */,
 				C87B03A8293B262600C77EAE /* NextSuggestionCommand.swift */,
 				C87B03AA293B262E00C77EAE /* PreviousSuggestionCommand.swift */,
 				C8009BFE2941C551007AA7E8 /* ToggleRealtimeSuggestionsCommand.swift */,
@@ -437,6 +446,7 @@
 				C81291D52994FE6900196E12 /* Main.storyboard */,
 				C861E6142994F6080056CB02 /* Assets.xcassets */,
 				C861E6192994F6080056CB02 /* ExtensionService.entitlements */,
+				42888D502C66B10100DEF835 /* AuthStatusChecker.swift */,
 			);
 			path = ExtensionService;
 			sourceTree = "<group>";
@@ -718,6 +728,8 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/Server/package.json",
+				"$(SRCROOT)/Server/package-lock.json",
 			);
 			outputFileListPaths = (
 			);
@@ -726,6 +738,12 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "export PATH=/usr/local/bin:/opt/homebrew/bin:$PATH\n\nnpm -C Server install --force\ncp Server/node_modules/@github/copilot-language-server-darwin-arm64/copilot-language-server Server/node_modules/@github/copilot-language-server-darwin-arm64/copilot-language-server-arm64\n\necho \"Build and copy webview js/html files as the bundle resources\"\nnpm -C Server run build\nmkdir -p \"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources/webViewDist\"\ncp -R Server/dist/* \"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources/webViewDist/\"\n";
+				"$(SRCROOT)/Server/node_modules/@github/copilot-language-server/native/darwin-x64/copilot-language-server",
+				"$(SRCROOT)/Server/node_modules/@github/copilot-language-server/native/darwin-arm64/copilot-language-server-arm64",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "npm -C Server install\ncp Server/node_modules/@github/copilot-language-server/native/darwin-arm64/copilot-language-server Server/node_modules/@github/copilot-language-server/native/darwin-arm64/copilot-language-server-arm64\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -780,6 +798,7 @@
 				C89E75C32A46FB32000DD64F /* AppDelegate+Menu.swift in Sources */,
 				C8738B712BE4F8B700609E7F /* XPCController.swift in Sources */,
 				C861E6202994F63A0056CB02 /* ServiceDelegate.swift in Sources */,
+				42888D512C66B10100DEF835 /* AuthStatusChecker.swift in Sources */,
 				C861E6112994F6070056CB02 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
